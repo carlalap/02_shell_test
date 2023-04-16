@@ -138,54 +138,38 @@ int checkbuiltins(char **av, char *buffer, int exitstatus)
  * Return: 0 on success
  */
 
-void _forkprocess(char *path)
+int _forkprocess(char **av, char *buffer, char *fullpathbuffer)
 {
-    /*get current path*/
-    char current_path[PATH_MAX];
-    if (getcwd(current_path, sizeof(current_path)) == NULL) {
-        perror("getcwd() error");
-        exit(EXIT_FAILURE);
-    }
+	int i, status, result, exitstatus = 0;
+	pid_t pid;
 
-    /*create child process*/
-    pid_t pid = fork();
-    if (pid == -1) {
-        perror("fork() error");
-        exit(EXIT_FAILURE);
-    }
-    else if (pid == 0) {
-        /*child process*/
-        printf("Executing /bin/ls multiple times with spaces\n");
-
-        char *command = "/bin/ls   /bin/ls  /bin/ls /bin/ls  ";
-        char *token = strtok(command, " ");
-        while (token != NULL) {
-            char *arg[] = {"ls", token, NULL};
-            int result = execvp(arg[0], arg);
-            if (result == -1) {
-                perror("execvp() error");
-                exit(EXIT_FAILURE);
-            }
-            token = strtok(NULL, " ");
-        }
-    }
-    else {
-        /*parent process*/
-        int status;
-        waitpid(pid, &status, 0);
-        printf("Child process exited with status %d\n", status);
-
-        /*verify current path*/
-        char new_current_path[PATH_MAX];
-        if (getcwd(new_current_path, sizeof(new_current_path)) == NULL) {
-            perror("getcwd() error");
-            exit(EXIT_FAILURE);
-        }
-        if (strcmp(current_path, new_current_path) == 0) {
-            printf("Current path is still %s\n", current_path);
-        } else {
-            printf("Current path is now %s\n", new_current_path);
-        }
-    }
-}
-
+	pid = fork();
+	if (pid == -1)
+	{
+		perror("Error");
+		exit(1);
+	}
+	if (pid == 0)
+	{
+		result =  execve(fullpathbuffer, av, environ);
+		if (result == -1)
+		{
+			perror(av[0]);
+			for (i = 0; av[i]; i++)
+				free(av[i]);
+			free(av);
+			free(buffer);
+			exit(127);
+		}
+	}
+	wait(&status);
+	if (WIFEXITED(status))
+	{
+		exitstatus = WEXITSTATUS(status);
+	}
+	for (i = 0; av[i]; i++)
+		free(av[i]);
+	free(av);
+	free(buffer);
+	return (exitstatus);
+}  

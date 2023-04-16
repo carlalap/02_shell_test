@@ -52,6 +52,7 @@ int _splitPATH(char *str)
 	}
 	return (wordcount);
 }
+
 /**
  * _PATHstrcmp - compares PATH with environ to find PATH value
  * @s1: pointer PATH string
@@ -59,17 +60,18 @@ int _splitPATH(char *str)
  *
  * Return: 0 on success
  */
+
 int _PATHstrcmp(const char *s1, const char *s2)
 {
-	int i;
+	int len = strlen(s1);
 
-	for (i = 0; s2[i] != '='; i++)
+	if (strncmp(s1, s2, len) == 0 && s2[len] == '=')
 	{
-		if (s1[i] != s2[i])
-			return (-1);
+		return (0);
 	}
-	return (0);
+	return (-1);
 }
+
 /**
  * _concat - concats user string with PATH member string and /
  * @tmp: static array to store concatenated string
